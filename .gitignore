@@ -1,0 +1,15 @@
+.class
+.cache
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/project
+project/target
+project/plugins/project/
+.history
+.lib/
+.*.swp
+.*.swo
+.DS_Store
