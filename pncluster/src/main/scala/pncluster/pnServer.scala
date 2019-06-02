@@ -25,12 +25,52 @@ class ClusterActor extends Actor {
 /*
  * [Citation]
  * https://medium.com/@diego_pacheco/running-multi-nodes-akka-cluster-on-docker-24699a246c28
+ * https://doc.akka.io/docs/akka/current/cluster-usage.html
 */
-	override def preStart = Cluster(context.system).subscribe(self, classOf[ClusterDomainEvent])
+	val cluster = Cluster(context.system)
+	// cluster.subscribe(self, initialStateMode = InitialStateAsEvents,
+	// classOf[MemberEvent], classOf[UnreachableMember])
+	// override def preStart() = cluster.subscribe(self, classOf[ClusterDomainEvent])
+	override def preStart() = cluster.subscribe(self, classOf[MemberUp])
+	override def postStop() = cluster.unsubscribe(self)
 
 	def receive = {
-		case MemberUp(member) => println("member up")
-		case event => println(s"event ${event.toString}")
+	// The events to track the life-cycle of members are:
 
+	/* MemberJoined - A new member has joined the cluster and
+	its status has been changed to Joining*/
+
+	/* MemberUp - A new member has joined the cluster and its
+	status has been changed to Up*/
+		case MemberUp(member) => 
+		println("member up")
+		register(member)
+
+	/* MemberExited - A member is leaving the cluster and its
+	status has been changed to Exiting Note that the node might already have
+	been shutdown when this event is published on another node.*/
+
+	/* MemberRemoved - Member completely removed from the
+	cluster.*/
+
+	/* UnreachableMember - A member is considered as
+	unreachable, detected by the failure detector of at least one other
+	node.*/
+
+	/* ReachableMember - A member is considered as reachable
+	again, after having been unreachable. All nodes that previously detected
+	it as unreachable has detected it as reachable again.*/
+
+		case CurrentClusterState =>
+		state.members
+			.filter(_.status == MemberStatus.Up)
+			.foreach(register)
+			//TODO: register is a func that notifies the client it
+			//is available to accept jobs. Send some kind of
+			//acknowledgement case class
+
+		case event => 
+		println(s"event ${event.toString}")
 	}
+
 }
