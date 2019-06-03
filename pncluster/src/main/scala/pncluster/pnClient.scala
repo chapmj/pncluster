@@ -7,23 +7,24 @@ import akka.routing.ConsistentHashingRouter.ConsistentHashMapping
 import com.typesafe.config.ConfigFactory
 
 object startClient extends App {
-
 	val config = 
 		args.length match {
 			case 1 => ConfigFactory.load.getConfig(args(0))
 			case _ => ConfigFactory.load.getConfig("client")
 		}
 
-        val system = ActorSystem("ProperNamesClusterApp", config) 
 	val numberMappers = ConfigFactory.load.getInt("number-mappers")
 	val numberReducers = ConfigFactory.load.getInt("number-reducers")
+	val systemName = ConfigFactory.load.getString("system-name")
+
+        val system = ActorSystem(systemName, config) 
 
 	val client = system.actorOf(Props[ClientActor], name = "client")
 
 	//TODO: move seeds to application.conf
 	val addresses = Seq(
-		AddressFromURIString("akka.tcp://ProperNamesApp@127.0.0.1:2552"),
-		AddressFromURIString("akka.tcp://ProperNamesApp@127.0.0.1:2553"))
+		AddressFromURIString(s"akka.tcp://${systemName}@127.0.0.1:2552"),
+		AddressFromURIString(s"akka.tcp://${systemName}@127.0.0.1:2553"))
 
 	//TODO: set up routers in cluster
 	val reducers = system.actorOf(
@@ -47,10 +48,6 @@ object startClient extends App {
 
 	Thread.sleep(5000)
 	println("SENDING BOOKS...")
-
-//	for (book <- library.books) {
-//		client ! BookRouter(book, mappers)
-//	}
 	library.books.foreach(tell(BookRouter(_,mappers), client))
 	
 	client ! Flush(mappers)

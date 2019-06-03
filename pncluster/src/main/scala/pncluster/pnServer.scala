@@ -15,7 +15,8 @@ object startServer extends App {
 			case _ => ConfigFactory.load.getConfig("server")
 		}
 
-        val system = ActorSystem("ProperNamesClusterApp", config) 
+	val systemName = ConfigFactory.load.getString("system-name")
+        val system = ActorSystem(systemName, config) 
 
 	//Create an actor to handle cluster messages
 	system.actorOf(Props[ClusterActor])

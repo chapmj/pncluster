@@ -1,6 +1,6 @@
 
 
-# Map reduce projct
+# Map reduce project
 Deploy Akka clustering map reduce application to docker	
 
 ## Docker runtime
@@ -56,3 +56,13 @@ to simplify the selection process.
 
 Work still continues as follows.  Mapper Jobs => Mappers until all mappers have
 completed their work. Then Reducer Jobs => reducers
+
+
+### Distributed PubSub 
+Probably overkill for the map reduce problem
+
+### Group Routers
+Routers are activated within cluster members.  
+
+
+
