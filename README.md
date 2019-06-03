@@ -40,4 +40,19 @@ Place a file named Dockerfile in the target directory.
 todo
 
 ## Akka Clustering
+Goal: start up Akka cluster on docker.
 
+Components of cluster:
+
+Docker container starts and launched cluster member
+Seed0 launches first to coordiante membership
+Seed1 also launches.
+
+In the start code, we have a client that launches routers which coordinate work
+to server actor systems.
+
+What I would like to do is use a random router to distribute messaging. This is
+to simplify the selection process.
+
+Work still continues as follows.  Mapper Jobs => Mappers until all mappers have
+completed their work. Then Reducer Jobs => reducers

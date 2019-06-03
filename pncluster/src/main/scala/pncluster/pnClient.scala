@@ -1,6 +1,5 @@
 package pncluster
 
-
 import akka.actor.{Actor, ActorRef, Props, ActorSystem, Address, AddressFromURIString}
 import akka.remote.routing.RemoteRouterConfig
 import akka.routing.{Broadcast, Router, ConsistentHashingPool, RoundRobinPool}
@@ -21,10 +20,12 @@ object startClient extends App {
 
 	val client = system.actorOf(Props[ClientActor], name = "client")
 
+	//TODO: move seeds to application.conf
 	val addresses = Seq(
 		AddressFromURIString("akka.tcp://ProperNamesApp@127.0.0.1:2552"),
 		AddressFromURIString("akka.tcp://ProperNamesApp@127.0.0.1:2553"))
 
+	//TODO: set up routers in cluster
 	val reducers = system.actorOf(
 		RemoteRouterConfig(
 			ConsistentHashingPool(
@@ -32,6 +33,7 @@ object startClient extends App {
 				hashMapping = hashMapping), 
 			addresses).props(Props[Reducer]))
 
+	//TODO: set up routers in cluster
 	val mappers = system.actorOf(
 		RemoteRouterConfig(
 			RoundRobinPool(numberMappers), addresses).
@@ -46,19 +48,17 @@ object startClient extends App {
 	Thread.sleep(5000)
 	println("SENDING BOOKS...")
 
-	for (book <- library.books) {
-		client ! BookRouter(book, mappers)
-	}
+//	for (book <- library.books) {
+//		client ! BookRouter(book, mappers)
+//	}
+	library.books.foreach(tell(BookRouter(_,mappers), client))
 	
 	client ! Flush(mappers)
 }
 
 class ClientActor extends Actor {
 
-        val numberReducers = ConfigFactory.load.getInt("number-reducers")
-
-        // Keep track of how many reducers are busy
-        var pending = numberReducers
+        var busyReducersPending = ConfigFactory.load.getInt("number-reducers")
 
         def receive =
         {
@@ -73,7 +73,7 @@ class ClientActor extends Actor {
                 println(result)
 
                 case Done =>
-                pending -= 1
+                busyReducersPending -= 1
                 if (pending == 0) { context.system.terminate }
         }
 }
