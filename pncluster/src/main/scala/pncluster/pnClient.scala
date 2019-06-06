@@ -13,11 +13,7 @@ object startClient extends App {
 			case _ => ConfigFactory.load.getConfig("client")
 		}
 
-	val numberMappers = ConfigFactory.load.getInt("number-mappers")
-	val numberReducers = ConfigFactory.load.getInt("number-reducers")
-	val systemName = ConfigFactory.load.getString("system-name")
-
-        val system = ActorSystem(systemName, config) 
+	val system = ActorSystem(ConfigFactory.load.getString("system-name"), config) 
 
 	val client = system.actorOf(Props[ClientActor], name = "client")
 
@@ -25,20 +21,6 @@ object startClient extends App {
 	val addresses = Seq(
 		AddressFromURIString(s"akka.tcp://${systemName}@127.0.0.1:2552"),
 		AddressFromURIString(s"akka.tcp://${systemName}@127.0.0.1:2553"))
-
-	//TODO: set up routers in cluster
-	val reducers = system.actorOf(
-		RemoteRouterConfig(
-			ConsistentHashingPool(
-				numberReducers, 
-				hashMapping = hashMapping), 
-			addresses).props(Props[Reducer]))
-
-	//TODO: set up routers in cluster
-	val mappers = system.actorOf(
-		RemoteRouterConfig(
-			RoundRobinPool(numberMappers), addresses).
-			props(Props(classOf[Mapper], reducers)))
 
 	def hashMapping: ConsistentHashMapping = {
 		case Name(name, title) => name
@@ -54,8 +36,6 @@ object startClient extends App {
 }
 
 class ClientActor extends Actor {
-
-        var busyReducersPending = ConfigFactory.load.getInt("number-reducers")
 
         def receive =
         {

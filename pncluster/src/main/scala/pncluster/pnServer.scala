@@ -28,7 +28,10 @@ class ClusterActor extends Actor {
  * https://doc.akka.io/docs/akka/current/cluster-usage.html
 */
 	val cluster = Cluster(context.system)
+
+	//Subscription: MemberUp
 	override def preStart() = cluster.subscribe(self, classOf[MemberUp])
+
 	override def postStop() = cluster.unsubscribe(self)
 
 	def receive = {
