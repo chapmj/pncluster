@@ -15,8 +15,7 @@ object startServer extends App {
 			case _ => ConfigFactory.load.getConfig("server")
 		}
 
-	val systemName = ConfigFactory.load.getString("system-name")
-        val system = ActorSystem(systemName, config) 
+        val system = ActorSystem(ConfigFactory.load.getString("system-name"), config) 
 
 	//Create an actor to handle cluster messages
 	system.actorOf(Props[ClusterActor])
@@ -29,9 +28,6 @@ class ClusterActor extends Actor {
  * https://doc.akka.io/docs/akka/current/cluster-usage.html
 */
 	val cluster = Cluster(context.system)
-	// cluster.subscribe(self, initialStateMode = InitialStateAsEvents,
-	// classOf[MemberEvent], classOf[UnreachableMember])
-	// override def preStart() = cluster.subscribe(self, classOf[ClusterDomainEvent])
 	override def preStart() = cluster.subscribe(self, classOf[MemberUp])
 	override def postStop() = cluster.unsubscribe(self)
 
